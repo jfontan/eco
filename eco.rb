@@ -20,10 +20,14 @@ PORT = 4567
 
 $repoman=RepoManager.new
 
+def get_one_client
+    Client.new('jfontan:opennebula')
+end
+
 def get_user(name)
     user=nil
     
-    user_pool=UserPool.new(Client.new('jfontan:opennebula'))
+    user_pool=UserPool.new(get_one_client)
     user_pool.info
     user_pool.each{|u|
         if u.name==name
@@ -76,6 +80,31 @@ def describe_images(params)
 end
 
 
+def run_instances(params)
+    @user=get_user(params['AWSAccessKeyId'])
+    
+    image_id=params['ImageId']
+    image=$repoman.get(image_id)
+    
+    @vm_info=Hash.new
+    @vm_info[:img_path]=image.path
+    @vm_info[:img_id]=image_id
+    
+    template=ERB.new(File.read('templates/m1.small.erb'))
+    template_text=template.result(binding)
+    
+    pp template_text
+    
+    vm=VirtualMachine.new(VirtualMachine.build_xml, get_one_client)
+    response=vm.allocate(template_text)
+    
+    pp response
+    
+    @vm_info[:vm_id]=vm.id
+    
+    erb :run_instances
+end
+
 post '/' do
     pp params
     
@@ -84,6 +113,8 @@ post '/' do
         register_image(params)
     when 'DescribeImages'
         describe_images(params)
+    when 'RunInstances'
+        run_instances(params)
     end
 end
 
@@ -125,8 +156,8 @@ __END__
   </groupSet> 
   <instancesSet> 
     <item> 
-      <instanceId>i-2ba64342</instanceId> 
-      <imageId>ami-60a54009</imageId> 
+      <instanceId><%= @vm_info[:vm_id] %></instanceId> 
+      <imageId><%= @vm_info[:img_id] %></imageId> 
       <instanceState> 
         <code>0</code> 
         <name>pending</name> 
