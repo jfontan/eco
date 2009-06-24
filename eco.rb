@@ -46,6 +46,8 @@ def authenticate(params)
     user_name=params['AWSAccessKeyId']
     user=get_user(user_name)
     
+    return true
+    
     halt 401, "User does not exist" if !user
     
     signature_params=params.reject {|key,value| key=='Signature' }
@@ -105,6 +107,15 @@ def run_instances(params)
     erb :run_instances
 end
 
+def describe_instances(params)
+    @user=get_user(params['AWSAccessKeyId'])
+    
+    @vmpool=VirtualMachinePool.new(get_one_client)
+    @vmpool.info
+    
+    erb :describe_instances
+end
+
 post '/' do
     pp params
     
@@ -115,6 +126,8 @@ post '/' do
         describe_images(params)
     when 'RunInstances'
         run_instances(params)
+    when 'DescribeInstances'
+        describe_instances(params)
     end
 end
 
@@ -177,4 +190,44 @@ __END__
     </item> 
   </instancesSet> 
 </RunInstancesResponse> 
+
+@@ describe_instances
+<DescribeInstancesResponse xmlns="http://ec2.amazonaws.com/doc/2009-04-04/"> 
+  <reservationSet> 
+    <item> 
+      <reservationId>default</reservationId> 
+      <ownerId><%= @user[:name] %></ownerId> 
+      <groupSet> 
+        <item> 
+          <groupId>default</groupId> 
+        </item> 
+      </groupSet> 
+      <instancesSet> 
+        <% @vmpool.each do |vm| %>
+        <item> 
+          <instanceId><%= vm.id %></instanceId> 
+          <imageId><%= vm.id %></imageId> 
+          <instanceState> 
+            <code>0</code> 
+            <name>running</name> 
+          </instanceState> 
+          <privateDnsName>10-251-50-132.ec2.internal</privateDnsName> 
+          <dnsName>ec2-72-44-33-4.compute-1.amazonaws.com</dnsName> 
+          <keyName>example-key-name</keyName> 
+          <amiLaunchIndex>23</amiLaunchIndex> 
+          <productCodesSet> 
+            <item><productCode>774F4FF8</productCode></item> 
+          </productCodesSet> 
+          <instanceType>m1.large</instanceType> 
+          <launchTime>2007-08-07T11:54:42.000Z</launchTime> 
+          <placement> 
+            <availabilityZone>us-east-1b</availabilityZone> 
+          </placement> 
+        </item> 
+        <% end %>
+      </instancesSet>
+    </item>
+  </reservationSet>
+</DescribeInstancesResponse>
+  
 

@@ -20,14 +20,16 @@ base=EC2::Base.new(
     :use_ssl => false
 )
 
-pp base.describe_images
+#pp base.describe_images
 
 #pp base.register_image(
 #    :image_location => 'eco.rb'
 #)
 
-pp base.run_instances(
-    :image_id => "b8329b60-4227-012c-da6e-0019e333ebc5"
-)
+#pp base.run_instances(
+#    :image_id => "b8329b60-4227-012c-da6e-0019e333ebc5"
+#)
+
+pp base.describe_instances
 
 
